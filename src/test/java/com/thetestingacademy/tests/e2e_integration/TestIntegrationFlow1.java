@@ -36,16 +36,19 @@ public class TestIntegrationFlow1 extends BaseTest {
         System.out.println("positive Test");
         // Setup and Making a Request.
         requestSpecification.basePath(APIConstants.CREATE_UPDATE_BOOKING_URL);
-        response = RestAssured.given(requestSpecification).when().body(payloadManager.createPayloadBookingAsString()).log().all().post();
-        System.out.println(response.asString());
-        // Extraction
+        response = RestAssured.given(requestSpecification)
+                .when().body(payloadManager.createPayloadBookingAsString())
+                .post();
+        validatableResponse = response.then().log().all();
+        validatableResponse.statusCode(200);
+        //Extraction
         BookingResponse bookingResponse = payloadManager.bookingResponseJava(response.asString());
 
-        // Verification Part
+        //Verification
+        assertActions.verifyStringKey(bookingResponse.getBooking().getFirstname(), "Pramod");
         assertActions.verifyStringKeyNotNull(bookingResponse.getBookingid());
-        assertActions.verifyStringKey(bookingResponse.getBooking().getFirstname(),"Pramod");
 
-        iTestContext.setAttribute("Bookingid",bookingResponse.getBookingid());
+        iTestContext.setAttribute("bookingid",bookingResponse.getBookingid());
     }
 
     @Test(groups = "qa", priority = 2)
@@ -66,22 +69,58 @@ public class TestIntegrationFlow1 extends BaseTest {
         // Validatable Assertion
         validatableResponse.statusCode(200);
 
+        Booking booking = payloadManager.getResponseFromJSON(response.asString());
+        assertActions.verifyStringKeyNotNull(booking.getFirstname());
     }
 
     @Test(groups = "qa", priority = 3)
     @Owner("Vinod")
     @Description("TC#INT1 - Step 3. Verify Updated Booking by ID")
-    public void testUpdateBookingByID() {
+    public void testUpdateBookingByID(ITestContext iTestContext) {
 
-        Assert.assertTrue(true);
+        Integer bookingid = (Integer) iTestContext.getAttribute("bookingid");
+        String token = getToken();
+        iTestContext.setAttribute("token",token);
+
+        String basePathPUTPATCH = APIConstants.CREATE_UPDATE_BOOKING_URL + "/" + bookingid;
+        System.out.println(basePathPUTPATCH);
+
+        requestSpecification.basePath(basePathPUTPATCH);
+
+        response = RestAssured
+                .given(requestSpecification).cookie("token", token)
+                .when().body(payloadManager.fullUpdatePayloadAsString()).put();
+
+
+        validatableResponse = response.then().log().all();
+        // Validatable Assertion
+        validatableResponse.statusCode(200);
+
+        Booking booking = payloadManager.getResponseFromJSON(response.asString());
+
+        assertActions.verifyStringKeyNotNull(booking.getFirstname());
+        assertActions.verifyStringKey(booking.getFirstname(),"Lucky");
+
+
     }
 
     @Test(groups = "qa", priority = 4)
     @Owner("Vinod")
     @Description("TC#INT1 - Step 4. Delete the Booking by ID")
-    public void testDeleteBookingById()
-    {
-        Assert.assertTrue(true);
+    public void testDeleteBookingById(ITestContext iTestContext) {
+
+        Integer bookingid = (Integer) iTestContext.getAttribute("bookingid");
+        String token = (String)iTestContext.getAttribute("token");
+
+        String basePathDELETE = APIConstants.CREATE_UPDATE_BOOKING_URL + "/" + bookingid;
+
+        requestSpecification.basePath(basePathDELETE).cookie("token", token);
+        validatableResponse = RestAssured.given().spec(requestSpecification)
+                .when().delete().then().log().all();
+        validatableResponse.statusCode(201);
+
+
     }
+
 }
 
