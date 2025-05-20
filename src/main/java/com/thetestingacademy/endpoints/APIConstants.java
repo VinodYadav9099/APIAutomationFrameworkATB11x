@@ -1,6 +1,6 @@
 package com.thetestingacademy.endpoints;
 
-public class APIContants {
+public class APIConstants {
 
 
     public static String BASE_URL = "https://restful-booker.herokuapp.com";
